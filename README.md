@@ -152,6 +152,7 @@ If you ever want manual deploy instead:
 4. Site loads old version: hard refresh browser (`Ctrl+F5`) and clear CDN cache if used.
 5. SSL warning: reissue certificate and verify DNS is fully propagated.
 6. FTPS certificate name mismatch: first switch to `sftp` on port `22`; if host only supports FTPS, use the exact FTP server host from cPanel. As a last resort, set `DEPLOY_FTPS_INSECURE=true`.
+7. `mirror: Fatal error: max-retries exceeded`: hosting did not accept connection reliably from GitHub runner. Verify `DEPLOY_PROTOCOL` and `DEPLOY_PORT`, use exact FTP/SFTP host from cPanel, and confirm remote FTP/SFTP access is allowed by hosting firewall/security rules.
 
 ## Output Matrix
 

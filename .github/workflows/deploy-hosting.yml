@@ -178,17 +178,34 @@ jobs:
             ssl_cmd="set ftp:ssl-force false;"
           fi
 
+          echo "Deploy target: protocol=$protocol host=$DEPLOY_HOST port=$port path=$DEPLOY_REMOTE_PATH"
+
+          if ! timeout 8 bash -c "cat < /dev/null > /dev/tcp/$DEPLOY_HOST/$port" 2>/dev/null; then
+            echo "::error::Cannot connect to $DEPLOY_HOST:$port from GitHub Actions runner."
+            echo "::error::Check protocol/port, hosting firewall, and whether remote FTP/SFTP access is allowed."
+            exit 1
+          fi
+
           lftp -c "
-            set net:max-retries 2;
+            set cmd:fail-exit true;
+            set net:max-retries 5;
+            set net:reconnect-interval-base 5;
+            set net:reconnect-interval-multiplier 1;
+            set net:reconnect-interval-max 20;
             set net:timeout 20;
             set xfer:clobber on;
+            set ftp:passive-mode true;
+            set ftp:prefer-epsv true;
+            set sftp:auto-confirm yes;
             ${ssl_cmd}
             open -u \"$DEPLOY_USERNAME\",\"$DEPLOY_PASSWORD\" -p \"$port\" \"$protocol://$DEPLOY_HOST\";
+            mkdir -p \"$DEPLOY_REMOTE_PATH\";
+            cd \"$DEPLOY_REMOTE_PATH\";
             mirror -R --only-newer --verbose \
               --exclude-glob .git* \
               --exclude-glob .github \
               --exclude-glob node_modules \
               --exclude-glob *.log \
-              ./ \"$DEPLOY_REMOTE_PATH\";
+              ./ .;
             bye
           "
