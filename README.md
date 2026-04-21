@@ -47,54 +47,19 @@ npx serve .
 
 Then open the printed local URL.
 
-## Deploy-Ready Files Included
+## Deploy On Your Hosting
 
-This project now includes production hosting defaults out of the box:
+This is a static app (HTML, CSS, JS), so you can deploy it on any hosting you bought.
 
-- `netlify.toml` (Netlify publish + security/cache headers)
-- `vercel.json` (Vercel security/cache headers)
-- `robots.txt` (search crawler allow rules)
-- `site.webmanifest` (PWA metadata)
-- `404.html` (custom not found page)
-- `.nojekyll` (GitHub Pages static handling)
-- `.github/workflows/deploy-pages.yml` (automatic GitHub Pages deployment)
-
-## Deploy Free (Static Hosting)
-
-### Netlify
-
-1. Push this folder to a Git repository.
-2. In Netlify, click **Add new site** -> **Import an existing project**.
-3. Select your repository.
-4. Build command: leave empty.
-5. Publish directory: `.` (already set in `netlify.toml`).
-6. Deploy.
-
-### Vercel
-
-1. Push this folder to a Git repository.
-2. In Vercel, click **Add New Project** and import the repository.
-3. Framework preset: **Other**.
-4. Build command: leave empty.
-5. Output directory: `.`
-6. Deploy.
-
-### Cloudflare Pages
-
-1. Push this folder to a Git repository.
-2. In Cloudflare Pages, create a new project from that repo.
-3. Framework preset: **None**.
-4. Build command: leave empty.
-5. Build output directory: `.`
-6. Deploy.
-
-### GitHub Pages
-
-1. Push this folder to a GitHub repository.
-2. Open repository **Settings** -> **Pages**.
-3. Source: **GitHub Actions**.
-4. Keep the included workflow `.github/workflows/deploy-pages.yml`.
-5. Push to `main` to trigger deploy.
+1. Upload these files to your hosting web root:
+  - `index.html`
+  - `styles.css`
+  - `app.js`
+  - `site.webmanifest`
+  - `robots.txt`
+  - `404.html` (optional)
+2. Make sure `index.html` is the default page.
+3. Open your domain and test upload, resize, and ZIP download flows.
 
 ## Output Matrix
 
