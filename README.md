@@ -51,77 +51,104 @@ Then open the printed local URL.
 
 This project is static (HTML/CSS/JS), so it works on almost any paid hosting.
 
-### Step 1: Prepare files
+### Recommended: Auto-Deploy From GitHub on Every Push
 
-Keep all files in one folder and include:
+Use this when you want the easiest update flow from VS Code:
 
-- `index.html`
-- `styles.css`
-- `app.js`
-- `site.webmanifest`
-- `robots.txt`
-- `404.html`
-- `.htaccess` (for Apache/cPanel hosting)
+1. Edit locally.
+2. Push to `main`.
+3. Site updates automatically.
 
-### Step 2: Open your hosting web root
+#### Step 1: Confirm hosting deploy details
 
-Use your hosting panel and open your site root:
+In your hosting panel, collect these values:
 
-- Main domain usually: `public_html/`
-- Addon domain usually: `public_html/your-domain/`
+1. Protocol: `sftp` (recommended), or `ftps`, or `ftp`.
+2. Host: usually your FTP/SFTP host (example: `ftp.yourdomain.com`).
+3. Port: usually `22` for SFTP, `21` for FTP/FTPS.
+4. Username: hosting FTP/SFTP user.
+5. Password: hosting FTP/SFTP password.
+6. Remote path: your site web root folder.
 
-### Step 3: Upload project files
+Typical remote path values:
 
-You can upload with either method:
+1. Main domain: `/public_html/`
+2. Addon domain: `/public_html/your-domain/`
 
-1. File Manager (cPanel/Plesk): upload all files directly to web root.
-2. FTP/SFTP: connect with your host credentials and upload files to web root.
+#### Step 2: Add GitHub repository secrets
 
-Important: do not place files inside an extra nested folder unless you want the app under a subpath.
+Open your GitHub repository:
 
-### Step 4: Set default page
+1. Go to **Settings**.
+2. Go to **Secrets and variables** -> **Actions**.
+3. Click **New repository secret** and create:
 
-Make sure `index.html` is in the web root so opening your domain loads MultiSize.
+1. `DEPLOY_PROTOCOL`
+2. `DEPLOY_HOST`
+3. `DEPLOY_PORT`
+4. `DEPLOY_USERNAME`
+5. `DEPLOY_PASSWORD`
+6. `DEPLOY_REMOTE_PATH`
 
-### Step 5: Connect domain and DNS
+Notes:
 
-If your domain is not already connected:
+1. `DEPLOY_PROTOCOL` should be exactly one of: `sftp`, `ftps`, `ftp`.
+2. `DEPLOY_PORT` is optional if you use default ports, but adding it is best.
 
-1. Point nameservers to your hosting provider, or
-2. Set DNS records from your domain provider:
-   - `A` record for root (`@`) -> your hosting server IP
-   - `CNAME` for `www` -> root domain (or host target from your provider)
+#### Step 3: Verify workflow file exists
 
-Wait for propagation (can take a few minutes up to 24h).
+This repo includes automatic deployment workflow:
 
-### Step 6: Enable SSL (HTTPS)
+1. `.github/workflows/deploy-hosting.yml`
 
-In hosting panel, enable free Let's Encrypt SSL (or your paid SSL).
+It deploys on push to `main` and supports manual run from Actions tab.
 
-After SSL is issued, force HTTPS in panel if available.
+#### Step 4: Run first deployment manually
 
-### Step 7: Verify in browser
+1. Open **Actions** in GitHub.
+2. Select workflow **Deploy to Paid Hosting**.
+3. Click **Run workflow**.
+4. Wait for green check.
 
-Check these URLs:
+If it fails, read the failing step log. Most failures are wrong secret values or wrong remote path.
 
-1. `https://yourdomain.com/`
-2. `https://yourdomain.com/robots.txt`
-3. `https://yourdomain.com/site.webmanifest`
+#### Step 5: Point domain and SSL
 
-Then test app flow:
+1. Ensure domain DNS points to your hosting.
+2. Enable SSL in hosting panel (Let's Encrypt or paid SSL).
+3. Open `https://yourdomain.com/` and confirm the site loads.
 
-1. Upload a logo.
-2. Generate sizes.
-3. Download single file.
-4. Download ZIP.
+#### Step 6: Daily update workflow (easy mode)
 
-### Step 8: If something breaks
+After one-time setup, your normal process is:
 
-1. Blank page: open browser dev tools and check Console/Network for blocked JS or CDN errors.
-2. CSS missing: confirm `styles.css` path and file casing.
-3. JS not running: confirm `app.js` path and file casing.
-4. 404 errors: verify files are in the correct web root.
-5. SSL warning: reissue SSL certificate and re-check DNS.
+1. Edit in VS Code.
+2. Commit and push to `main`.
+3. GitHub Action deploys automatically.
+4. Refresh site and verify your update is live.
+
+### Manual Deployment (Fallback)
+
+If you ever want manual deploy instead:
+
+1. Upload these files to hosting web root:
+  - `index.html`
+  - `styles.css`
+  - `app.js`
+  - `site.webmanifest`
+  - `robots.txt`
+  - `404.html`
+  - `.htaccess` (Apache/cPanel)
+2. Make sure `index.html` is in web root.
+3. Test upload, resize, single download, and ZIP download.
+
+### Troubleshooting
+
+1. Workflow says missing secret: add all `DEPLOY_*` secrets exactly with same names.
+2. Login fails: verify host, protocol, port, username, password.
+3. Files not updating: verify `DEPLOY_REMOTE_PATH` points to actual web root.
+4. Site loads old version: hard refresh browser (`Ctrl+F5`) and clear CDN cache if used.
+5. SSL warning: reissue certificate and verify DNS is fully propagated.
 
 ## Output Matrix
 

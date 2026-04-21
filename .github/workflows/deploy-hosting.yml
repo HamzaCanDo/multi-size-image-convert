@@ -1,0 +1,97 @@
+name: Deploy to Paid Hosting
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-hosting
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      DEPLOY_PROTOCOL: ${{ secrets.DEPLOY_PROTOCOL }}
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+      DEPLOY_USERNAME: ${{ secrets.DEPLOY_USERNAME }}
+      DEPLOY_PASSWORD: ${{ secrets.DEPLOY_PASSWORD }}
+      DEPLOY_REMOTE_PATH: ${{ secrets.DEPLOY_REMOTE_PATH }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate deploy secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          protocol="${DEPLOY_PROTOCOL:-sftp}"
+          missing=0
+
+          for key in DEPLOY_HOST DEPLOY_USERNAME DEPLOY_PASSWORD DEPLOY_REMOTE_PATH; do
+            if [ -z "${!key:-}" ]; then
+              echo "::error::Missing GitHub secret: ${key}"
+              missing=1
+            fi
+          done
+
+          case "$protocol" in
+            sftp|ftps|ftp) ;;
+            *)
+              echo "::error::DEPLOY_PROTOCOL must be one of: sftp, ftps, ftp"
+              missing=1
+              ;;
+          esac
+
+          if [ "$missing" -ne 0 ]; then
+            echo "::error::Add required secrets before running deploy."
+            exit 1
+          fi
+
+          echo "DEPLOY_PROTOCOL=$protocol" >> "$GITHUB_ENV"
+
+      - name: Install lftp
+        run: sudo apt-get update && sudo apt-get install -y lftp
+
+      - name: Upload site files
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          protocol="$DEPLOY_PROTOCOL"
+          port="${DEPLOY_PORT:-}"
+
+          if [ -z "$port" ]; then
+            if [ "$protocol" = "sftp" ]; then
+              port="22"
+            else
+              port="21"
+            fi
+          fi
+
+          ssl_cmd=""
+          if [ "$protocol" = "ftps" ]; then
+            ssl_cmd="set ftp:ssl-force true; set ftp:ssl-protect-data true;"
+          elif [ "$protocol" = "ftp" ]; then
+            ssl_cmd="set ftp:ssl-force false;"
+          fi
+
+          lftp -c "
+            set net:max-retries 2;
+            set net:timeout 20;
+            set xfer:clobber on;
+            ${ssl_cmd}
+            open -u \"$DEPLOY_USERNAME\",\"$DEPLOY_PASSWORD\" -p \"$port\" \"$protocol://$DEPLOY_HOST\";
+            mirror -R --only-newer --verbose \
+              --exclude-glob .git* \
+              --exclude-glob .github \
+              --exclude-glob node_modules \
+              --exclude-glob *.log \
+              ./ \"$DEPLOY_REMOTE_PATH\";
+            bye
+          "
