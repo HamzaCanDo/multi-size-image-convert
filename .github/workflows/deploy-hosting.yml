@@ -157,6 +157,7 @@ jobs:
           protocol="$DEPLOY_PROTOCOL"
           port="${DEPLOY_PORT:-}"
           ftps_insecure="${DEPLOY_FTPS_INSECURE:-false}"
+          remote_path="$DEPLOY_REMOTE_PATH"
 
           if [ -z "$port" ]; then
             if [ "$protocol" = "sftp" ]; then
@@ -164,6 +165,15 @@ jobs:
             else
               port="21"
             fi
+          fi
+
+          if [ "$protocol" != "sftp" ] && [[ "$remote_path" == /home/* ]]; then
+            normalized_path="$(printf "%s" "$remote_path" | sed -E 's#^/home/[^/]+##')"
+            if [ -z "$normalized_path" ]; then
+              normalized_path="/"
+            fi
+            echo "::warning::Using FTP/FTPS chroot path normalization: $remote_path -> $normalized_path"
+            remote_path="$normalized_path"
           fi
 
           ssl_cmd=""
@@ -178,13 +188,30 @@ jobs:
             ssl_cmd="set ftp:ssl-force false;"
           fi
 
-          echo "Deploy target: protocol=$protocol host=$DEPLOY_HOST port=$port path=$DEPLOY_REMOTE_PATH"
+          echo "Deploy target: protocol=$protocol host=$DEPLOY_HOST port=$port path=$remote_path"
 
           if ! timeout 8 bash -c "cat < /dev/null > /dev/tcp/$DEPLOY_HOST/$port" 2>/dev/null; then
             echo "::error::Cannot connect to $DEPLOY_HOST:$port from GitHub Actions runner."
             echo "::error::Check protocol/port, hosting firewall, and whether remote FTP/SFTP access is allowed."
             exit 1
           fi
+
+          echo "Running remote access diagnostics before mirror upload..."
+          lftp -c "
+            set cmd:fail-exit true;
+            set net:max-retries 1;
+            set net:timeout 20;
+            set ftp:passive-mode true;
+            set ftp:prefer-epsv true;
+            set sftp:auto-confirm yes;
+            ${ssl_cmd}
+            open -u \"$DEPLOY_USERNAME\",\"$DEPLOY_PASSWORD\" -p \"$port\" \"$protocol://$DEPLOY_HOST\";
+            pwd;
+            mkdir -p \"$remote_path\";
+            cd \"$remote_path\";
+            pwd;
+            bye
+          "
 
           lftp -c "
             set cmd:fail-exit true;
@@ -199,8 +226,8 @@ jobs:
             set sftp:auto-confirm yes;
             ${ssl_cmd}
             open -u \"$DEPLOY_USERNAME\",\"$DEPLOY_PASSWORD\" -p \"$port\" \"$protocol://$DEPLOY_HOST\";
-            mkdir -p \"$DEPLOY_REMOTE_PATH\";
-            cd \"$DEPLOY_REMOTE_PATH\";
+            mkdir -p \"$remote_path\";
+            cd \"$remote_path\";
             mirror -R --only-newer --verbose \
               --exclude-glob .git* \
               --exclude-glob .github \

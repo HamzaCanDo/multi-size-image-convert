@@ -75,6 +75,11 @@ Typical remote path values:
 1. Main domain: `/public_html/`
 2. Addon domain: `/public_html/your-domain/`
 
+Path format note:
+
+1. For `sftp`, full server paths like `/home/kitbinto/public_html/multisize/` are usually valid.
+2. For `ftps` or `ftp`, many hosts use chroot, so use web-root style paths like `/public_html/multisize/`.
+
 #### Step 2: Add GitHub repository secrets
 
 Open your GitHub repository:
@@ -153,6 +158,7 @@ If you ever want manual deploy instead:
 5. SSL warning: reissue certificate and verify DNS is fully propagated.
 6. FTPS certificate name mismatch: first switch to `sftp` on port `22`; if host only supports FTPS, use the exact FTP server host from cPanel. As a last resort, set `DEPLOY_FTPS_INSECURE=true`.
 7. `mirror: Fatal error: max-retries exceeded`: hosting did not accept connection reliably from GitHub runner. Verify `DEPLOY_PROTOCOL` and `DEPLOY_PORT`, use exact FTP/SFTP host from cPanel, and confirm remote FTP/SFTP access is allowed by hosting firewall/security rules.
+8. If diagnostics step fails at changing remote directory, update `DEPLOY_REMOTE_PATH` based on protocol: full `/home/...` for SFTP, `/public_html/...` for FTP/FTPS.
 
 ## Output Matrix
 
