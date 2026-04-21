@@ -1,0 +1,10 @@
+{
+  "name": "MultiSize",
+  "short_name": "MultiSize",
+  "description": "Free browser-based logo and image resizer for web-ready assets.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#11705f"
+}

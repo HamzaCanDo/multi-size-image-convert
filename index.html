@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="MultiSize is a free browser-based logo and image resizer that generates web-ready assets in one click with no uploads and no backend."
+    />
+    <meta name="robots" content="index,follow" />
+    <meta name="theme-color" content="#11705f" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="MultiSize | Client-Side Logo Resizer" />
+    <meta
+      property="og:description"
+      content="Generate hero logos, headers, favicons, and icons locally in your browser. No upload required."
+    />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="MultiSize | Client-Side Logo Resizer" />
+    <meta
+      name="twitter:description"
+      content="Free logo and image resizer that runs fully in-browser and exports ZIP-ready web assets."
+    />
+    <title>MultiSize | Client-Side Logo Resizer</title>
+    <link rel="manifest" href="site.webmanifest" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="hero">
+        <p class="eyebrow">Client-side only</p>
+        <h1>MultiSize</h1>
+        <p class="subtitle">
+          Free logo and image resizer for web-ready assets. Everything runs in your browser only.
+        </p>
+      </header>
+
+      <section class="panel controls-panel">
+        <div class="upload-grid">
+          <article class="upload-card">
+            <h2>Main Logo</h2>
+            <p class="card-hint">Used for hero and header outputs.</p>
+
+            <div class="dropzone" id="mainDropzone" tabindex="0" role="button" aria-controls="mainInput">
+              <input id="mainInput" class="file-input" type="file" accept="image/*" />
+              <div class="dropzone-copy">
+                <p class="dropzone-title">Drop image or browse</p>
+                <p class="dropzone-subtitle">PNG, JPG, WEBP, SVG</p>
+              </div>
+            </div>
+
+            <div class="source-preview" id="mainSourcePreview"></div>
+            <p class="file-meta" id="mainMeta">No file selected.</p>
+          </article>
+
+          <article class="upload-card">
+            <h2>Icon-Only Image</h2>
+            <p class="card-hint">Optional. Used for favicon and square icon outputs.</p>
+
+            <div class="dropzone" id="iconDropzone" tabindex="0" role="button" aria-controls="iconInput">
+              <input id="iconInput" class="file-input" type="file" accept="image/*" />
+              <div class="dropzone-copy">
+                <p class="dropzone-title">Drop image or browse</p>
+                <p class="dropzone-subtitle">Optional upload</p>
+              </div>
+            </div>
+
+            <div class="source-preview" id="iconSourcePreview"></div>
+            <p class="file-meta" id="iconMeta">Not selected. Main logo will be reused.</p>
+          </article>
+        </div>
+
+        <div class="option-row">
+          <label class="option-field" for="fitMode">
+            Fit mode
+            <select id="fitMode">
+              <option value="contain" selected>Contain (transparent padding)</option>
+              <option value="cover">Cover crop</option>
+            </select>
+          </label>
+
+          <label class="check-field" for="allowUpscale">
+            <input id="allowUpscale" type="checkbox" />
+            <span>Allow upscaling</span>
+          </label>
+        </div>
+
+        <section class="custom-panel" aria-labelledby="customSizesHeading">
+          <div class="custom-head">
+            <div>
+              <h3 id="customSizesHeading">Custom Sizes</h3>
+              <p class="card-hint">Add extra outputs or insert ready-made presets.</p>
+            </div>
+            <p class="custom-summary" id="customSummary">No custom sizes configured.</p>
+          </div>
+
+          <div class="custom-tools">
+            <label class="option-field custom-preset-field" for="customPreset">
+              Auto helper
+              <select id="customPreset">
+                <option value="responsive">Responsive logo set</option>
+                <option value="social">Social preview set</option>
+                <option value="app">App icon extension set</option>
+              </select>
+            </label>
+            <button id="addPresetBtn" class="btn btn-secondary" type="button">Add Preset</button>
+            <button id="addCustomBtn" class="btn btn-secondary" type="button">Add Size</button>
+            <button id="clearCustomBtn" class="btn btn-secondary" type="button">Clear Custom</button>
+          </div>
+
+          <div class="custom-rows" id="customRows">
+            <article class="custom-empty">No custom sizes yet. Click Add Size to start.</article>
+          </div>
+
+          <p class="custom-error hidden" id="customError" role="alert"></p>
+        </section>
+
+        <div class="button-row">
+          <button id="resizeBtn" class="btn btn-primary" type="button">Resize All</button>
+          <button id="downloadAllBtn" class="btn btn-secondary" type="button" disabled>
+            Download All ZIP
+          </button>
+        </div>
+
+        <div class="progress-panel hidden" id="progressPanel" aria-live="polite">
+          <div class="progress-head">
+            <span id="progressLabel">Waiting to start</span>
+            <span id="progressPercent">0%</span>
+          </div>
+          <div class="progress-track">
+            <div id="progressBar" class="progress-bar"></div>
+          </div>
+        </div>
+
+        <p class="status-line" id="statusLine">Upload a main logo image to begin.</p>
+      </section>
+
+      <section class="panel results-panel">
+        <div class="results-header">
+          <h2>Generated Assets</h2>
+          <p id="resultSummary">0 files ready</p>
+        </div>
+
+        <div class="skipped-panel hidden" id="skippedPanel">
+          <h3>Skipped targets</h3>
+          <ul id="skippedList"></ul>
+        </div>
+
+        <div class="preview-grid" id="previewGrid">
+          <article class="empty-state">Run Resize All to generate previews and downloads.</article>
+        </div>
+      </section>
+
+      <footer class="footer-note">
+        No backend. No uploads. No cloud storage. Your files stay on your device.
+      </footer>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/pica@9.0.1/dist/pica.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
