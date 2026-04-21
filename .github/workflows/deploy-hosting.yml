@@ -31,15 +31,57 @@ jobs:
         run: |
           set -euo pipefail
 
-          protocol="${DEPLOY_PROTOCOL:-sftp}"
+          # Normalize common copy/paste issues in secrets (extra spaces, CRLF, protocol prefixes).
+          trim() {
+            local value="$1"
+            value="${value//$'\r'/}"
+            value="${value#"${value%%[![:space:]]*}"}"
+            value="${value%"${value##*[![:space:]]}"}"
+            printf "%s" "$value"
+          }
+
+          protocol="$(trim "${DEPLOY_PROTOCOL:-sftp}")"
+          protocol="${protocol,,}"
+          host="$(trim "${DEPLOY_HOST:-}")"
+          username="$(trim "${DEPLOY_USERNAME:-}")"
+          remote_path="$(trim "${DEPLOY_REMOTE_PATH:-}")"
+          port="$(trim "${DEPLOY_PORT:-}")"
+
+          host="${host#sftp://}"
+          host="${host#ftps://}"
+          host="${host#ftp://}"
+
+          if [[ "$host" == */* ]]; then
+            echo "::warning::DEPLOY_HOST contained a path segment. Only the host name will be used."
+            host="${host%%/*}"
+          fi
+
+          if [ -z "$port" ] && [[ "$host" =~ ^([^:]+):([0-9]+)$ ]]; then
+            host="${BASH_REMATCH[1]}"
+            port="${BASH_REMATCH[2]}"
+          fi
+
           missing=0
 
-          for key in DEPLOY_HOST DEPLOY_USERNAME DEPLOY_PASSWORD DEPLOY_REMOTE_PATH; do
-            if [ -z "${!key:-}" ]; then
-              echo "::error::Missing GitHub secret: ${key}"
-              missing=1
-            fi
-          done
+          if [ -z "$host" ]; then
+            echo "::error::Missing or empty GitHub secret: DEPLOY_HOST"
+            missing=1
+          fi
+
+          if [ -z "$username" ]; then
+            echo "::error::Missing or empty GitHub secret: DEPLOY_USERNAME"
+            missing=1
+          fi
+
+          if [ -z "${DEPLOY_PASSWORD:-}" ]; then
+            echo "::error::Missing or empty GitHub secret: DEPLOY_PASSWORD"
+            missing=1
+          fi
+
+          if [ -z "$remote_path" ]; then
+            echo "::error::Missing or empty GitHub secret: DEPLOY_REMOTE_PATH"
+            missing=1
+          fi
 
           case "$protocol" in
             sftp|ftps|ftp) ;;
@@ -49,12 +91,39 @@ jobs:
               ;;
           esac
 
+          if [[ "$host" =~ [[:space:]] ]]; then
+            echo "::error::DEPLOY_HOST must not contain spaces. Use host only (example: ftp.yourdomain.com)."
+            missing=1
+          fi
+
+          if [ -n "$port" ] && ! [[ "$port" =~ ^[0-9]+$ ]]; then
+            echo "::error::DEPLOY_PORT must be numeric."
+            missing=1
+          fi
+
+          if [ -n "$port" ] && { [ "$port" -lt 1 ] || [ "$port" -gt 65535 ]; }; then
+            echo "::error::DEPLOY_PORT must be between 1 and 65535."
+            missing=1
+          fi
+
+          if [ "$missing" -eq 0 ] && ! getent hosts "$host" > /dev/null; then
+            echo "::error::DEPLOY_HOST could not be resolved from GitHub runner DNS: $host"
+            echo "::error::Use host only (no protocol, no path) and verify spelling in secret DEPLOY_HOST."
+            missing=1
+          fi
+
           if [ "$missing" -ne 0 ]; then
             echo "::error::Add required secrets before running deploy."
             exit 1
           fi
 
           echo "DEPLOY_PROTOCOL=$protocol" >> "$GITHUB_ENV"
+          echo "DEPLOY_HOST=$host" >> "$GITHUB_ENV"
+          echo "DEPLOY_USERNAME=$username" >> "$GITHUB_ENV"
+          echo "DEPLOY_REMOTE_PATH=$remote_path" >> "$GITHUB_ENV"
+          if [ -n "$port" ]; then
+            echo "DEPLOY_PORT=$port" >> "$GITHUB_ENV"
+          fi
 
       - name: Install lftp
         run: sudo apt-get update && sudo apt-get install -y lftp
