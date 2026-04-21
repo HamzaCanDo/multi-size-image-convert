@@ -200,7 +200,8 @@ jobs:
           lftp -c "
             set cmd:fail-exit true;
             set net:max-retries 1;
-            set net:timeout 20;
+            set net:timeout 60;
+            set net:connection-limit 1;
             set ftp:passive-mode true;
             set ftp:prefer-epsv true;
             set sftp:auto-confirm yes;
@@ -219,7 +220,8 @@ jobs:
             set net:reconnect-interval-base 5;
             set net:reconnect-interval-multiplier 1;
             set net:reconnect-interval-max 20;
-            set net:timeout 20;
+            set net:timeout 60;
+            set net:connection-limit 1;
             set xfer:clobber on;
             set ftp:passive-mode true;
             set ftp:prefer-epsv true;
