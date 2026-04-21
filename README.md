@@ -51,6 +51,48 @@ Then open the printed local URL.
 
 This project is static (HTML/CSS/JS), so it works on almost any paid hosting.
 
+### Alternative Method: cPanel Git Version Control (No FTP Secrets)
+
+If GitHub Actions FTP or SFTP is unstable on your host, use cPanel Git deployment.
+
+What this gives you:
+
+1. You keep coding in VS Code and pushing to GitHub.
+2. In cPanel, you click Pull or Deploy to publish latest commit.
+3. No FTP credentials needed in GitHub secrets.
+
+#### One-time setup
+
+1. Open cPanel.
+2. Open Git Version Control.
+3. Click Create.
+4. Clone URL: your repository URL.
+5. Repository Path: keep default or use a folder outside web root.
+6. Ensure branch is `main`.
+7. Create repository.
+
+This repo includes deployment file `.cpanel.yml` that publishes to:
+
+1. `/home/kitbinto/public_html/multisize/`
+
+#### First deploy in cPanel
+
+1. In cPanel Git Version Control, click Manage for this repo.
+2. Click Pull or Deploy.
+3. Wait for success output.
+4. Open your site URL and test.
+
+#### Daily update flow (simple)
+
+1. Edit in VS Code.
+2. Commit and push to `main`.
+3. In cPanel Git Version Control, click Pull or Deploy.
+4. Refresh site.
+
+#### Optional automation later
+
+If you want fully automatic updates later, we can add webhook or scheduled pull based on your hosting capabilities.
+
 ### Recommended: Auto-Deploy From GitHub on Every Push
 
 Use this when you want the easiest update flow from VS Code:

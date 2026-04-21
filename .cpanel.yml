@@ -1,0 +1,6 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/kitbinto/public_html/multisize/
+    - /bin/mkdir -p "$DEPLOYPATH"
+    - /usr/bin/rsync -av --delete --exclude='.git/' --exclude='.github/' --exclude='node_modules/' ./ "$DEPLOYPATH"
