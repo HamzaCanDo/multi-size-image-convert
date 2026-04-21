@@ -21,6 +21,7 @@ jobs:
       DEPLOY_USERNAME: ${{ secrets.DEPLOY_USERNAME }}
       DEPLOY_PASSWORD: ${{ secrets.DEPLOY_PASSWORD }}
       DEPLOY_REMOTE_PATH: ${{ secrets.DEPLOY_REMOTE_PATH }}
+      DEPLOY_FTPS_INSECURE: ${{ secrets.DEPLOY_FTPS_INSECURE }}
 
     steps:
       - name: Checkout
@@ -46,6 +47,8 @@ jobs:
           username="$(trim "${DEPLOY_USERNAME:-}")"
           remote_path="$(trim "${DEPLOY_REMOTE_PATH:-}")"
           port="$(trim "${DEPLOY_PORT:-}")"
+          ftps_insecure="$(trim "${DEPLOY_FTPS_INSECURE:-false}")"
+          ftps_insecure="${ftps_insecure,,}"
 
           host="${host#sftp://}"
           host="${host#ftps://}"
@@ -91,6 +94,19 @@ jobs:
               ;;
           esac
 
+          case "$ftps_insecure" in
+            ""|false|0|no)
+              ftps_insecure="false"
+              ;;
+            true|1|yes)
+              ftps_insecure="true"
+              ;;
+            *)
+              echo "::error::DEPLOY_FTPS_INSECURE must be true or false when provided."
+              missing=1
+              ;;
+          esac
+
           if [[ "$host" =~ [[:space:]] ]]; then
             echo "::error::DEPLOY_HOST must not contain spaces. Use host only (example: ftp.yourdomain.com)."
             missing=1
@@ -112,6 +128,10 @@ jobs:
             missing=1
           fi
 
+          if [ "$protocol" = "ftps" ] && [ "$ftps_insecure" = "true" ]; then
+            echo "::warning::FTPS certificate verification is disabled via DEPLOY_FTPS_INSECURE=true."
+          fi
+
           if [ "$missing" -ne 0 ]; then
             echo "::error::Add required secrets before running deploy."
             exit 1
@@ -121,6 +141,7 @@ jobs:
           echo "DEPLOY_HOST=$host" >> "$GITHUB_ENV"
           echo "DEPLOY_USERNAME=$username" >> "$GITHUB_ENV"
           echo "DEPLOY_REMOTE_PATH=$remote_path" >> "$GITHUB_ENV"
+          echo "DEPLOY_FTPS_INSECURE=$ftps_insecure" >> "$GITHUB_ENV"
           if [ -n "$port" ]; then
             echo "DEPLOY_PORT=$port" >> "$GITHUB_ENV"
           fi
@@ -135,6 +156,7 @@ jobs:
 
           protocol="$DEPLOY_PROTOCOL"
           port="${DEPLOY_PORT:-}"
+          ftps_insecure="${DEPLOY_FTPS_INSECURE:-false}"
 
           if [ -z "$port" ]; then
             if [ "$protocol" = "sftp" ]; then
@@ -146,7 +168,12 @@ jobs:
 
           ssl_cmd=""
           if [ "$protocol" = "ftps" ]; then
-            ssl_cmd="set ftp:ssl-force true; set ftp:ssl-protect-data true;"
+            if [ "$ftps_insecure" = "true" ]; then
+              echo "::warning::FTPS certificate verification is disabled for this run."
+              ssl_cmd="set ftp:ssl-force true; set ftp:ssl-protect-data true; set ssl:verify-certificate no;"
+            else
+              ssl_cmd="set ftp:ssl-force true; set ftp:ssl-protect-data true; set ssl:verify-certificate yes;"
+            fi
           elif [ "$protocol" = "ftp" ]; then
             ssl_cmd="set ftp:ssl-force false;"
           fi

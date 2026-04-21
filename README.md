@@ -89,11 +89,13 @@ Open your GitHub repository:
 4. `DEPLOY_USERNAME`
 5. `DEPLOY_PASSWORD`
 6. `DEPLOY_REMOTE_PATH`
+7. `DEPLOY_FTPS_INSECURE` (optional, default `false`)
 
 Notes:
 
 1. `DEPLOY_PROTOCOL` should be exactly one of: `sftp`, `ftps`, `ftp`.
 2. `DEPLOY_PORT` is optional if you use default ports, but adding it is best.
+3. Keep `DEPLOY_FTPS_INSECURE=false` unless your hosting FTPS certificate does not match host name.
 
 #### Step 3: Verify workflow file exists
 
@@ -149,6 +151,7 @@ If you ever want manual deploy instead:
 3. Files not updating: verify `DEPLOY_REMOTE_PATH` points to actual web root.
 4. Site loads old version: hard refresh browser (`Ctrl+F5`) and clear CDN cache if used.
 5. SSL warning: reissue certificate and verify DNS is fully propagated.
+6. FTPS certificate name mismatch: first switch to `sftp` on port `22`; if host only supports FTPS, use the exact FTP server host from cPanel. As a last resort, set `DEPLOY_FTPS_INSECURE=true`.
 
 ## Output Matrix
 
