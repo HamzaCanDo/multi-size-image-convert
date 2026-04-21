@@ -49,17 +49,79 @@ Then open the printed local URL.
 
 ## Deploy On Your Hosting
 
-This is a static app (HTML, CSS, JS), so you can deploy it on any hosting you bought.
+This project is static (HTML/CSS/JS), so it works on almost any paid hosting.
 
-1. Upload these files to your hosting web root:
-  - `index.html`
-  - `styles.css`
-  - `app.js`
-  - `site.webmanifest`
-  - `robots.txt`
-  - `404.html` (optional)
-2. Make sure `index.html` is the default page.
-3. Open your domain and test upload, resize, and ZIP download flows.
+### Step 1: Prepare files
+
+Keep all files in one folder and include:
+
+- `index.html`
+- `styles.css`
+- `app.js`
+- `site.webmanifest`
+- `robots.txt`
+- `404.html`
+- `.htaccess` (for Apache/cPanel hosting)
+
+### Step 2: Open your hosting web root
+
+Use your hosting panel and open your site root:
+
+- Main domain usually: `public_html/`
+- Addon domain usually: `public_html/your-domain/`
+
+### Step 3: Upload project files
+
+You can upload with either method:
+
+1. File Manager (cPanel/Plesk): upload all files directly to web root.
+2. FTP/SFTP: connect with your host credentials and upload files to web root.
+
+Important: do not place files inside an extra nested folder unless you want the app under a subpath.
+
+### Step 4: Set default page
+
+Make sure `index.html` is in the web root so opening your domain loads MultiSize.
+
+### Step 5: Connect domain and DNS
+
+If your domain is not already connected:
+
+1. Point nameservers to your hosting provider, or
+2. Set DNS records from your domain provider:
+   - `A` record for root (`@`) -> your hosting server IP
+   - `CNAME` for `www` -> root domain (or host target from your provider)
+
+Wait for propagation (can take a few minutes up to 24h).
+
+### Step 6: Enable SSL (HTTPS)
+
+In hosting panel, enable free Let's Encrypt SSL (or your paid SSL).
+
+After SSL is issued, force HTTPS in panel if available.
+
+### Step 7: Verify in browser
+
+Check these URLs:
+
+1. `https://yourdomain.com/`
+2. `https://yourdomain.com/robots.txt`
+3. `https://yourdomain.com/site.webmanifest`
+
+Then test app flow:
+
+1. Upload a logo.
+2. Generate sizes.
+3. Download single file.
+4. Download ZIP.
+
+### Step 8: If something breaks
+
+1. Blank page: open browser dev tools and check Console/Network for blocked JS or CDN errors.
+2. CSS missing: confirm `styles.css` path and file casing.
+3. JS not running: confirm `app.js` path and file casing.
+4. 404 errors: verify files are in the correct web root.
+5. SSL warning: reissue SSL certificate and re-check DNS.
 
 ## Output Matrix
 
