@@ -21,24 +21,6 @@ const OUTPUT_SPECS = Object.freeze([
 ]);
 
 const REQUIRED_FAVICON_SIZES = [16, 32, 48];
-const ALLOWED_IMAGE_EXTENSIONS = Object.freeze(
-  new Set([
-    "png",
-    "jpg",
-    "jpeg",
-    "webp",
-    "svg",
-    "gif",
-    "bmp",
-    "tif",
-    "tiff",
-    "ico",
-    "avif",
-    "heic",
-    "heif",
-    "jfif",
-  ])
-);
 const CUSTOM_USAGE_OPTIONS = Object.freeze(["hero", "header", "favicon", "icon"]);
 const MAX_CUSTOM_ROWS = 50;
 const MAX_CUSTOM_DIMENSION = 8192;
@@ -434,14 +416,6 @@ function bindDropzone(dropzone, input, slot) {
 }
 
 async function handleFileSelection(file, slot) {
-  if (!isSupportedImageFile(file)) {
-    setStatus(
-      "Unsupported file type. Use PNG, JPG, JPEG, WEBP, SVG, GIF, BMP, TIFF, ICO, AVIF, HEIC, or JFIF.",
-      true
-    );
-    return;
-  }
-
   setStatus(`Loading ${file.name}...`);
 
   try {
@@ -450,24 +424,8 @@ async function handleFileSelection(file, slot) {
     setStatus(`${slot === "main" ? "Main logo" : "Icon image"} ready.`);
   } catch (error) {
     console.error(error);
-    setStatus(`Could not read image: ${error.message}`, true);
+    setStatus("Could not read this file as an image. Try PNG, JPG, WEBP, or SVG.", true);
   }
-}
-
-function isSupportedImageFile(file) {
-  const mimeType = (file.type || "").trim().toLowerCase();
-  if (mimeType.startsWith("image/")) {
-    return true;
-  }
-
-  const fileName = (file.name || "").toLowerCase();
-  const dotIndex = fileName.lastIndexOf(".");
-  if (dotIndex === -1 || dotIndex === fileName.length - 1) {
-    return false;
-  }
-
-  const extension = fileName.slice(dotIndex + 1);
-  return ALLOWED_IMAGE_EXTENSIONS.has(extension);
 }
 
 function assignSource(slot, source) {
