@@ -424,8 +424,20 @@ async function handleFileSelection(file, slot) {
     setStatus(`${slot === "main" ? "Main logo" : "Icon image"} ready.`);
   } catch (error) {
     console.error(error);
-    setStatus("Could not read this file as an image. Try PNG, JPG, WEBP, or SVG.", true);
+    setStatus(buildImageDecodeErrorMessage(file.name), true);
   }
+}
+
+function buildImageDecodeErrorMessage(fileName) {
+  const lowered = (fileName || "").toLowerCase();
+  const dotIndex = lowered.lastIndexOf(".");
+  const extension = dotIndex === -1 ? "" : lowered.slice(dotIndex + 1);
+
+  if (["heic", "heif", "tif", "tiff", "ico", "avif"].includes(extension)) {
+    return "This image format may not be supported by your browser. Convert it to PNG or JPG and try again.";
+  }
+
+  return "Could not read this file as an image. Try PNG, JPG, WEBP, SVG, GIF, or BMP.";
 }
 
 function assignSource(slot, source) {
